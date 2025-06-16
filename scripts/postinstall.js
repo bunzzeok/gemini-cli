@@ -1,7 +1,8 @@
-import inquirer from "inquirer";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { platform } from "os";
+import { createInterface } from "readline";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,17 +25,27 @@ async function setupToken() {
       "Gemini API 키가 필요합니다. https://makersuite.google.com/app/apikey 에서 발급받을 수 있습니다.\n"
     );
 
-    const answers = await inquirer.prompt([
-      {
-        type: "input",
-        name: "apiKey",
-        message: "Gemini API 키를 입력하세요:",
-        validate: (input) => (input.length > 0 ? true : "API 키를 입력해주세요."),
-      },
-    ]);
+    // readline 인터페이스 생성
+    const rl = createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    // Promise로 감싸서 사용자 입력 받기
+    const apiKey = await new Promise((resolve) => {
+      rl.question('Gemini API 키를 입력하세요: ', (answer) => {
+        rl.close();
+        resolve(answer);
+      });
+    });
+
+    if (!apiKey) {
+      console.error("API 키를 입력해주세요.");
+      process.exit(1);
+    }
 
     // .env 파일 생성 또는 업데이트
-    const envContent = `GEMINI_API_KEY=${answers.apiKey}\n`;
+    const envContent = `GEMINI_API_KEY=${apiKey}\n`;
     fs.writeFileSync(envPath, envContent, { encoding: 'utf8' });
     console.log("\nAPI 키가 성공적으로 저장되었습니다!");
     console.log("이제 `gemini` 명령어를 사용할 수 있습니다.");
