@@ -1,0 +1,26 @@
+{
+  "name": "gemini-cli",
+  "version": "1.0.0",
+  "description": "Gemini AI CLI Tool",
+  "type": "module",
+  "main": "src/cli.js",
+  "bin": {
+    "gemini": "./bin/gemini.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js"
+  },
+  "keywords": [
+    "gemini",
+    "ai",
+    "cli",
+    "chat"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "@google/genai": "^1.5.0",
+    "dotenv": "^16.4.5",
+    "inquirer": "^8.2.6"
+  }
+}
