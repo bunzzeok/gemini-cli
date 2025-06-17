@@ -1,7 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
 import geminiRoutes from "./routes/gemini.routes.js";
-import cors from 'cors';
 
 dotenv.config();
 
@@ -10,9 +9,6 @@ const port = process.env.PORT || 3000;
 
 // Express 미들웨어 설정: JSON 파싱
 app.use(express.json());
-
-// CORS 미들웨어 설정: 모든 도메인 허용
-app.use(cors());
 
 // 라우트 설정: Gemini API
 app.use("/api/gemini", geminiRoutes);

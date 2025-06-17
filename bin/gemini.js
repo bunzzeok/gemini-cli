@@ -63,7 +63,7 @@ async function main() {
 
   // CLI 실행
   const nodePath = platform() === 'win32' ? 'node.exe' : 'node';
-  const cliProcess = spawn(nodePath, [cliPath], {
+  const cliProcess = spawn(nodePath, [cliPath, ...process.argv.slice(2)], {
     stdio: "inherit",
     shell: true
   });
