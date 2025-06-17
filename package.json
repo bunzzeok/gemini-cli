@@ -1,6 +1,6 @@
 {
   "name": "briggs-gemini-cli",
-  "version": "1.0.25",
+  "version": "1.0.26",
   "description": "Gemini AI CLI Tool",
   "type": "module",
   "main": "src/cli.js",
@@ -10,6 +10,7 @@
   "scripts": {
     "postinstall": "node scripts/fix-line-endings.js"
   },
+  "preferGlobal": true,
   "keywords": [
     "gemini",
     "ai",
