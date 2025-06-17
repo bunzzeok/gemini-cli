@@ -1,6 +1,6 @@
 {
-  "name": "gemini-cli",
-  "version": "1.0.0",
+  "name": "briggs-gemini-cli",
+  "version": "1.0.25",
   "description": "Gemini AI CLI Tool",
   "type": "module",
   "main": "src/cli.js",
@@ -8,8 +8,7 @@
     "gemini": "bin/gemini.js"
   },
   "scripts": {
-    "postinstall": "node scripts/postinstall.js",
-    "preinstall": "npm install @google/genai dotenv inquirer"
+    "postinstall": "node scripts/fix-line-endings.js"
   },
   "keywords": [
     "gemini",
@@ -21,9 +20,7 @@
   "license": "MIT",
   "dependencies": {
     "@google/genai": "^1.5.1",
-    "dotenv": "^16.5.0"
-  },
-  "devDependencies": {
+    "dotenv": "^16.5.0",
     "inquirer": "^9.3.7"
   },
   "engines": {
@@ -32,12 +29,6 @@
   "files": [
     "bin",
     "src",
-    "scripts",
-    "node_modules"
-  ],
-  "bundleDependencies": [
-    "@google/genai",
-    "dotenv",
-    "inquirer"
+    "scripts"
   ]
 }

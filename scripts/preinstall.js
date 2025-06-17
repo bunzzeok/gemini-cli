@@ -1,7 +1,8 @@
+#!/usr/bin/env node
+
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { platform } from "os";
 import inquirer from "inquirer";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -9,7 +10,7 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, "..");
 const envPath = path.join(rootDir, ".env");
 
-async function setupToken() {
+async function checkAndSetupToken() {
   try {
     // .env 파일이 이미 존재하는지 확인
     if (fs.existsSync(envPath)) {
@@ -20,7 +21,7 @@ async function setupToken() {
       }
     }
 
-    console.log("\nGemini CLI 초기 설정을 시작합니다.");
+    console.log("\nGemini CLI 설치를 시작합니다.");
     console.log(
       "Gemini API 키가 필요합니다. https://makersuite.google.com/app/apikey 에서 발급받을 수 있습니다.\n"
     );
@@ -39,26 +40,17 @@ async function setupToken() {
       }
     ]);
 
-    if (!apiKey) {
-      console.error("API 키를 입력해주세요.");
-      process.exit(1);
-    }
-
     // .env 파일 생성 또는 업데이트
     const envContent = `GEMINI_API_KEY=${apiKey}\n`;
     fs.writeFileSync(envPath, envContent, { encoding: 'utf8' });
     console.log("\nAPI 키가 성공적으로 저장되었습니다!");
-    console.log("이제 `gemini` 명령어를 사용할 수 있습니다.");
   } catch (error) {
     console.error("설정 중 오류가 발생했습니다:", error.message);
     process.exit(1);
   }
 }
 
-// Windows에서 권한 문제를 피하기 위해 약간의 지연 추가
-setTimeout(() => {
-  setupToken().catch((error) => {
-    console.error("예기치 않은 오류가 발생했습니다:", error);
-    process.exit(1);
-  });
-}, 1000);
+checkAndSetupToken().catch((error) => {
+  console.error("예기치 않은 오류가 발생했습니다:", error);
+  process.exit(1);
+}); 
