@@ -57,25 +57,20 @@ gemini "What is the capital of France?"
 
 ## Changelog
 
-### v1.1.0 (2025-06-17)
+### v1.1.3 (2025-06-17)
 - Project Analysis Improvements
   - Fixed duplicate output issue in analysis results
   - Enhanced file path recognition
   - Improved analysis result formatting
 - Code Modification Enhancements
   - Added common file modification request mappings
-    - "프롬프트 수정해줘" → src/config/prompts.js
-    - "CLI 수정해줘" → src/cli.js
-    - "분석기 수정해줘" → src/services/analyzer.js
-    - "수정기 수정해줘" → src/services/modifier.js
-    - "명령어 수정해줘" → src/commands/handler.js
   - Improved file path resolution logic
 - Code Structure Improvements
   - Modular separation by functionality
   - Enhanced error handling
   - Improved code readability
 
-### v1.0.28 (2024-03-20)
+### v1.0.28 (2025-06-17)
 - Initial Release
   - Basic CLI functionality
   - Gemini AI integration
