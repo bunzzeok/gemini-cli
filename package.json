@@ -1,6 +1,6 @@
 {
   "name": "briggs-gemini-cli",
-  "version": "1.0.26",
+  "version": "1.0.27",
   "description": "Gemini AI CLI Tool",
   "type": "module",
   "main": "src/cli.js",

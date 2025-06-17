@@ -43,7 +43,7 @@ gemini "What is the capital of France?"
 
 ## Requirements
 
-- Node.js version 16 or higher
+- Node.js version 20 or higher
 - A Gemini API key from Google AI Studio
 
 ## Notes
