@@ -2,8 +2,22 @@ import readline from "readline";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import { prompts } from "./config/prompts.js";
+import path from "path";
+import { fileURLToPath } from "url";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.resolve(__dirname, "..");
+const envPath = path.join(rootDir, ".env");
+
+// .env 파일 로드
+dotenv.config({ path: envPath });
+
+if (!process.env.GEMINI_API_KEY) {
+  console.error("Gemini API 키가 설정되지 않았습니다.");
+  console.error("https://makersuite.google.com/app/apikey 에서 API 키를 발급받아 .env 파일에 설정해주세요.");
+  process.exit(1);
+}
 
 const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 

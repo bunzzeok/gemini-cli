@@ -1,45 +1,57 @@
 # Gemini CLI
 
-Gemini AI와 대화할 수 있는 간단한 CLI 도구입니다.
+A command-line interface tool for interacting with Google's Gemini AI.
 
-## 설치 방법
-
-1. 저장소를 클론합니다:
+## Installation
 
 ```bash
-git clone [repository-url]
-cd gemini-cli
+npm install -g briggs-gemini-cli
 ```
 
-2. 의존성을 설치합니다:
+## First-time Setup
 
+When you run the `gemini` command for the first time, you'll be prompted to enter your Gemini API key. You can get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey).
+
+## Usage
+
+### Interactive Mode
+
+Simply run:
 ```bash
-npm install
+gemini
 ```
 
-3. `.env` 파일을 생성하고 Gemini API 키를 설정합니다:
+This will start an interactive chat session with Gemini AI. You can:
+- Type your questions or prompts
+- Press Enter to send
+- Type 'exit' or 'quit' to end the session
 
-```
-GEMINI_API_KEY=your_api_key_here
-```
+### Single Query Mode
 
-## 사용 방법
-
-1. 프로그램을 실행합니다:
-
+You can also ask a single question:
 ```bash
-npm start
+gemini "What is the capital of France?"
 ```
 
-2. 프롬프트에 질문을 입력합니다:
+## Features
 
-```
-gemini 안녕하세요
-```
+- Interactive chat interface
+- Support for both Windows and macOS
+- Secure API key storage
+- Real-time AI responses
+- Simple and intuitive usage
 
-3. 프로그램을 종료하려면 'exit' 또는 'quit'를 입력하세요.
+## Requirements
 
-## 주의사항
+- Node.js version 16 or higher
+- A Gemini API key from Google AI Studio
 
-- Gemini API 키는 Google AI Studio에서 발급받을 수 있습니다.
-- API 키는 절대로 공개되지 않도록 주의하세요.
+## Notes
+
+- Your API key is stored locally in a `.env` file
+- The key is never shared or transmitted to any external services
+- The tool works offline once the API key is configured
+
+## License
+
+MIT
