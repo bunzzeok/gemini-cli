@@ -11,6 +11,8 @@ export function ensureBackupDirectory(rootDir) {
 }
 
 export async function modifyCode(filePath, request, genAI, prompts, rootDir) {
+  let backupPath = null; // 백업 경로를 저장할 변수 선언
+  
   try {
     console.log(chalk.blue(`\n코드 수정 시작: ${filePath}`));
     
@@ -61,7 +63,7 @@ export async function modifyCode(filePath, request, genAI, prompts, rootDir) {
     try {
       const backupDir = ensureBackupDirectory(rootDir);
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const backupPath = path.join(backupDir, `${path.basename(filePath)}.${timestamp}.backup`);
+      backupPath = path.join(backupDir, `${path.basename(filePath)}.${timestamp}.backup`);
       fs.writeFileSync(backupPath, originalContent);
       console.log(chalk.green(`✅ 백업 완료: ${backupPath}`));
     } catch (backupError) {

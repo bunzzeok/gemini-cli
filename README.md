@@ -57,6 +57,13 @@ gemini "What is the capital of France?"
 
 ## Changelog
 
+### v1.1.5 (2025-06-18)
+- Backup Path Storage Enhancement
+  - Added configurable backup directory path variable
+  - Users can now customize backup file storage location
+  - Improved backup file organization and management
+  - Enhanced backup path validation and error handling
+
 ### v1.1.4 (2025-06-18)
 - Major Error Handling Improvements
   - Enhanced try-catch blocks across all functions
