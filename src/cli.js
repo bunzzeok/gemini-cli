@@ -334,7 +334,16 @@ async function askQuestion() {
       startLoading();
 
       // 명령어 처리
-      const isCommand = await handleCommand(input, genAI, prompts, rootDir);
+      let isCommand = false;
+      try {
+        isCommand = await handleCommand(input, genAI, prompts, rootDir);
+      } catch (commandError) {
+        console.error(chalk.red(`명령어 처리 중 오류: ${commandError.message}`));
+        stopLoading();
+        askQuestion();
+        return;
+      }
+      
       if (isCommand) {
         stopLoading();
         askQuestion();
@@ -371,9 +380,12 @@ async function askQuestion() {
       try {
         // JSON 응답 파싱
         const parsedResponse = JSON.parse(response);
-        console.log("\n답변:", parsedResponse.text, "\n");
-      } catch (error) {
-        console.error("응답 파싱 오류:", error.message);
+        if (parsedResponse && parsedResponse.text) {
+          console.log("\n답변:", parsedResponse.text, "\n");
+        } else {
+          console.log("\n답변:", response, "\n");
+        }
+      } catch (parseError) {
         console.log("\n답변:", response, "\n");
       }
     } catch (error) {
@@ -417,8 +429,12 @@ if (args.length > 0) {
 
     try {
       const parsedResponse = JSON.parse(response);
-      console.log(parsedResponse.text);
-    } catch (error) {
+      if (parsedResponse && parsedResponse.text) {
+        console.log(parsedResponse.text);
+      } else {
+        console.log(response);
+      }
+    } catch (parseError) {
       console.log(response);
     }
   } catch (error) {

@@ -57,6 +57,26 @@ gemini "What is the capital of France?"
 
 ## Changelog
 
+### v1.1.4 (2025-06-18)
+- Major Error Handling Improvements
+  - Enhanced try-catch blocks across all functions
+  - Added specific error messages for network and API key issues
+  - User-friendly error guidance with recovery suggestions
+- File Path Processing Enhancements
+  - Automatic absolute/relative path resolution
+  - Smart file extension detection (.js, .ts, .jsx, etc.)
+  - Similar filename suggestions when file not found
+  - Pre-validation of file existence
+- API Response Stability
+  - Robust JSON parsing with fallback mechanisms
+  - Code block extraction for malformed responses
+  - Response structure validation
+- User Experience Improvements
+  - Progress indicators and status messages
+  - Automatic backup file generation with timestamps
+  - Clear success/failure feedback
+  - Graceful error recovery without program termination
+
 ### v1.1.3 (2025-06-17)
 - Project Analysis Improvements
   - Fixed duplicate output issue in analysis results
