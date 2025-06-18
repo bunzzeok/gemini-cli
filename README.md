@@ -17,11 +17,13 @@ When you run the `gemini` command for the first time, you'll be prompted to ente
 ### Interactive Mode
 
 Simply run:
+
 ```bash
 gemini
 ```
 
 This will start an interactive chat session with Gemini AI. You can:
+
 - Type your questions or prompts
 - Press Enter to send
 - Type 'exit' or 'quit' to end the session
@@ -29,6 +31,7 @@ This will start an interactive chat session with Gemini AI. You can:
 ### Single Query Mode
 
 You can also ask a single question:
+
 ```bash
 gemini "What is the capital of France?"
 ```
@@ -57,7 +60,8 @@ gemini "What is the capital of France?"
 
 ## Changelog
 
-### v1.1.5 (2025-06-18)
+### v1.1.6 (2025-06-18)
+
 - Backup Path Storage Enhancement
   - Added configurable backup directory path variable
   - Users can now customize backup file storage location
@@ -65,6 +69,7 @@ gemini "What is the capital of France?"
   - Enhanced backup path validation and error handling
 
 ### v1.1.4 (2025-06-18)
+
 - Major Error Handling Improvements
   - Enhanced try-catch blocks across all functions
   - Added specific error messages for network and API key issues
@@ -85,6 +90,7 @@ gemini "What is the capital of France?"
   - Graceful error recovery without program termination
 
 ### v1.1.3 (2025-06-17)
+
 - Project Analysis Improvements
   - Fixed duplicate output issue in analysis results
   - Enhanced file path recognition
@@ -98,6 +104,7 @@ gemini "What is the capital of France?"
   - Improved code readability
 
 ### v1.0.28 (2025-06-17)
+
 - Initial Release
   - Basic CLI functionality
   - Gemini AI integration
