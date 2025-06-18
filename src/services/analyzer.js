@@ -84,14 +84,22 @@ export function analyzeProjectStructure() {
 
 export async function analyzeProject(genAI, prompts) {
   try {
+    console.log(chalk.blue('\n프로젝트 분석을 시작합니다...\n'));
+    
     const projectFiles = analyzeProjectStructure();
     
     if (projectFiles.length === 0) {
-      throw new Error('분석할 파일을 찾을 수 없습니다.');
+      console.log(chalk.yellow('\n⚠️  분석할 파일을 찾을 수 없습니다.'));
+      return null;
     }
 
     console.log(chalk.blue(`\n총 ${projectFiles.length}개의 파일을 분석합니다...\n`));
     
+    // API 호출 전 prompts 검증
+    if (!prompts || !prompts.codeAnalysis) {
+      throw new Error('프롬프트 설정이 올바르지 않습니다.');
+    }
+
     const analysisChat = genAI.chats.create({
       model: "gemini-2.0-flash",
       config: {
@@ -104,19 +112,66 @@ export async function analyzeProject(genAI, prompts) {
       message: `다음 프로젝트의 파일들을 분석해주세요. 각 파일의 내용은 최대 1000자로 제한되어 있습니다:\n\n${JSON.stringify(projectFiles, null, 2)}`,
     });
 
+    // API 응답 검증
+    if (!result || !result.candidates || !result.candidates[0] || !result.candidates[0].content) {
+      throw new Error('AI 응답이 올바르지 않습니다.');
+    }
+
     const analysis = result.candidates[0].content.parts[0].text;
     console.log(chalk.green('\n✨ 분석 결과: ✨\n'));
     console.log(formatAnalysisResult(analysis));
     console.log(chalk.green('\n------------------------------------\n'));
     return analysis;
   } catch (error) {
-    throw new Error(`프로젝트 분석 중 오류 발생: ${error.message}`);
+    console.error(chalk.red(`\n❌ 프로젝트 분석 중 오류 발생: ${error.message}`));
+    
+    // 네트워크 오류 처리
+    if (error.message.includes('fetch') || error.message.includes('network')) {
+      console.log(chalk.yellow('\n🔄 네트워크 연결을 확인하고 다시 시도해주세요.'));
+    }
+    
+    // API 키 오류 처리
+    if (error.message.includes('API') || error.message.includes('key')) {
+      console.log(chalk.yellow('\n🔑 API 키 설정을 확인해주세요.'));
+    }
+    
+    throw error;
   }
 }
 
 export async function analyzeCode(filePath, genAI, prompts) {
   try {
-    const content = fs.readFileSync(filePath, 'utf-8');
+    // 파일 경로 해석 및 검증
+    const currentDir = process.cwd();
+    const targetPath = path.isAbsolute(filePath) ? filePath : path.resolve(currentDir, filePath);
+    
+    console.log(chalk.blue(`\n파일 분석 시작: ${targetPath}`));
+    
+    // 파일 존재 여부 확인
+    if (!fs.existsSync(targetPath)) {
+      console.log(chalk.yellow(`\n⚠️  파일을 찾을 수 없습니다: ${filePath}`));
+      console.log(chalk.gray(`현재 디렉토리: ${currentDir}`));
+      return null;
+    }
+
+    // 파일 읽기
+    let content;
+    try {
+      content = fs.readFileSync(targetPath, 'utf-8');
+    } catch (readError) {
+      throw new Error(`파일 읽기 실패: ${readError.message}`);
+    }
+
+    if (content.trim().length === 0) {
+      console.log(chalk.yellow('\n⚠️  파일이 비어있습니다.'));
+      return null;
+    }
+
+    // API 호출 전 prompts 검증
+    if (!prompts || !prompts.codeAnalysis) {
+      throw new Error('프롬프트 설정이 올바르지 않습니다.');
+    }
+
     const analysisChat = genAI.chats.create({
       model: "gemini-2.0-flash",
       config: {
@@ -129,12 +184,29 @@ export async function analyzeCode(filePath, genAI, prompts) {
       message: `다음 코드를 분석해주세요:\n\n${content}`,
     });
 
+    // API 응답 검증
+    if (!result || !result.candidates || !result.candidates[0] || !result.candidates[0].content) {
+      throw new Error('AI 응답이 올바르지 않습니다.');
+    }
+
     const analysis = result.candidates[0].content.parts[0].text;
     console.log(chalk.green('\n✨ 분석 결과: ✨\n'));
     console.log(formatAnalysisResult(analysis));
     console.log(chalk.green('\n------------------------------------\n'));
     return analysis;
   } catch (error) {
-    throw new Error(`코드 분석 중 오류 발생: ${error.message}`);
+    console.error(chalk.red(`\n❌ 코드 분석 중 오류 발생: ${error.message}`));
+    
+    // 네트워크 오류 처리
+    if (error.message.includes('fetch') || error.message.includes('network')) {
+      console.log(chalk.yellow('\n🔄 네트워크 연결을 확인하고 다시 시도해주세요.'));
+    }
+    
+    // API 키 오류 처리
+    if (error.message.includes('API') || error.message.includes('key')) {
+      console.log(chalk.yellow('\n🔑 API 키 설정을 확인해주세요.'));
+    }
+    
+    throw error;
   }
 } 
