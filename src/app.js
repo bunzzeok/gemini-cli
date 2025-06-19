@@ -8,6 +8,15 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3000;
 
+// 필수 환경 변수 확인
+const requiredEnvVariables = ['API_KEY']; // 필요한 환경 변수 목록
+for (const envVar of requiredEnvVariables) {
+  if (!process.env[envVar]) {
+    console.error(`필수 환경 변수 누락: ${envVar}`);
+    process.exit(1); // 애플리케이션 종료
+  }
+}
+
 // Express 미들웨어 설정: JSON 파싱
 app.use(express.json());
 

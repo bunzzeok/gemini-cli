@@ -9,4 +9,6 @@ const __dirname = dirname(__filename);
 
 const cliPath = resolve(__dirname, "../src/cli.js");
 
-spawn("node", [cliPath], { stdio: "inherit" });
+// 명령행 인수를 CLI에 전달
+const args = process.argv.slice(2);
+spawn("node", [cliPath, ...args], { stdio: "inherit" });

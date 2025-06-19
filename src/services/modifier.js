@@ -12,32 +12,44 @@ export function ensureBackupDirectory(rootDir) {
 }
 
 /**
- * 백업 파일 목록 조회
+ * 백업 파일 목록 조회 (backup 폴더 내에서만 검색)
  * @param {string} rootDir - 루트 디렉토리
  * @returns {Array} 백업 파일 목록
  */
 export function listBackups(rootDir) {
   const backupDir = path.join(rootDir, 'backup');
-  if (!fs.existsSync(backupDir)) {
-    return [];
-  }
+  const backups = [];
 
   try {
-    const files = fs.readdirSync(backupDir);
-    return files
-      .filter(file => file.endsWith('.backup'))
-      .map(file => {
-        const filePath = path.join(backupDir, file);
-        const stats = fs.statSync(filePath);
-        return {
-          name: file,
-          path: filePath,
-          size: stats.size,
-          created: stats.mtime,
-          originalFile: file.replace(/\.[^.]+\.backup$/, '')
-        };
-      })
-      .sort((a, b) => b.created - a.created);
+    // backup/ 디렉토리에서만 백업 파일 검색
+    if (fs.existsSync(backupDir)) {
+      function scanBackupDir(dir, relativePath = '') {
+        const items = fs.readdirSync(dir);
+        
+        items.forEach(item => {
+          const fullPath = path.join(dir, item);
+          const stats = fs.statSync(fullPath);
+          
+          if (stats.isDirectory()) {
+            scanBackupDir(fullPath, path.join(relativePath, item));
+          } else if (item.endsWith('.backup')) {
+            const relativeBackupPath = path.join(relativePath, item);
+            backups.push({
+              name: relativeBackupPath,
+              path: fullPath,
+              size: stats.size,
+              created: stats.mtime,
+              originalFile: item.replace(/\.[^.]+\.backup$/, ''),
+              directory: relativePath || '.'
+            });
+          }
+        });
+      }
+      
+      scanBackupDir(backupDir);
+    }
+    
+    return backups.sort((a, b) => b.created - a.created);
   } catch (error) {
     console.error(chalk.red(`백업 목록 조회 실패: ${error.message}`));
     return [];
@@ -58,17 +70,35 @@ export function restoreFromBackup(backupPath, targetPath = null) {
 
     const backupContent = fs.readFileSync(backupPath, 'utf-8');
     
-    // 대상 파일 경로가 지정되지 않은 경우 원본 파일명 추출
+    // 대상 파일 경로가 지정되지 않은 경우 원본 경로 복원
     if (!targetPath) {
-      const backupFileName = path.basename(backupPath);
-      const originalFileName = backupFileName.replace(/\.[^.]+\.backup$/, '');
-      targetPath = path.join(process.cwd(), originalFileName);
+      // 백업 파일에서 원본 경로 추출
+      // backup/src/app.js.timestamp.backup -> src/app.js
+      const relativePath = path.relative(path.join(process.cwd(), 'backup'), backupPath);
+      const originalPath = relativePath.replace(/\.[^.]+\.backup$/, '');
+      targetPath = path.join(process.cwd(), originalPath);
+      
+      // 대상 디렉토리가 존재하지 않으면 생성
+      const targetDir = path.dirname(targetPath);
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+      }
     }
 
     // 현재 파일이 존재하면 추가 백업 생성
     if (fs.existsSync(targetPath)) {
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const preRestoreBackup = path.join(path.dirname(backupPath), `${path.basename(targetPath)}.pre-restore-${timestamp}.backup`);
+      const backupDir = path.join(process.cwd(), 'backup');
+      const relativeTargetPath = path.relative(process.cwd(), targetPath);
+      const preRestoreBackupPath = path.join(backupDir, relativeTargetPath);
+      const preRestoreBackupDir = path.dirname(preRestoreBackupPath);
+      
+      // 백업 디렉토리 구조 생성
+      if (!fs.existsSync(preRestoreBackupDir)) {
+        fs.mkdirSync(preRestoreBackupDir, { recursive: true });
+      }
+      
+      const preRestoreBackup = `${preRestoreBackupPath}.pre-restore-${timestamp}.backup`;
       fs.copyFileSync(targetPath, preRestoreBackup);
       console.log(chalk.yellow(`복원 전 현재 파일 백업: ${preRestoreBackup}`));
     }
@@ -83,46 +113,51 @@ export function restoreFromBackup(backupPath, targetPath = null) {
 }
 
 /**
- * 오래된 백업 파일 정리
+ * 백업 폴더 내 모든 파일 삭제
  * @param {string} rootDir - 루트 디렉토리
- * @param {number} maxAge - 최대 보관 기간 (일)
- * @param {number} maxCount - 최대 백업 파일 수
  * @returns {number} 삭제된 파일 수
  */
-export function cleanupBackups(rootDir, maxAge = 30, maxCount = 50) {
-  const backups = listBackups(rootDir);
-  if (backups.length === 0) {
+export function cleanupBackups(rootDir) {
+  const backupDir = path.join(rootDir, 'backup');
+  
+  if (!fs.existsSync(backupDir)) {
+    console.log(chalk.yellow('백업 폴더가 존재하지 않습니다.'));
     return 0;
   }
 
   let deletedCount = 0;
-  const now = new Date();
-  const maxAgeMs = maxAge * 24 * 60 * 60 * 1000;
 
-  // 나이별 정리
-  const oldBackups = backups.filter(backup => {
-    const age = now - backup.created;
-    return age > maxAgeMs;
-  });
-
-  // 개수별 정리
-  const excessBackups = backups.slice(maxCount);
-
-  // 중복 제거
-  const toDelete = [...new Set([...oldBackups, ...excessBackups])];
-
-  toDelete.forEach(backup => {
-    try {
-      fs.unlinkSync(backup.path);
-      deletedCount++;
-      console.log(chalk.gray(`🗑️  오래된 백업 삭제: ${backup.name}`));
-    } catch (error) {
-      console.error(chalk.red(`백업 삭제 실패: ${backup.name} - ${error.message}`));
+  try {
+    // backup 폴더 내 모든 파일과 디렉토리 삭제
+    function deleteBackupContents(dir) {
+      const items = fs.readdirSync(dir);
+      
+      items.forEach(item => {
+        const fullPath = path.join(dir, item);
+        const stats = fs.statSync(fullPath);
+        
+        if (stats.isDirectory()) {
+          // 디렉토리인 경우 재귀적으로 삭제
+          deleteBackupContents(fullPath);
+          fs.rmdirSync(fullPath);
+        } else {
+          // 파일인 경우 삭제
+          fs.unlinkSync(fullPath);
+          deletedCount++;
+          console.log(chalk.gray(`🗑️  백업 파일 삭제: ${path.relative(backupDir, fullPath)}`));
+        }
+      });
     }
-  });
-
-  if (deletedCount > 0) {
-    console.log(chalk.green(`✅ ${deletedCount}개의 오래된 백업 파일을 정리했습니다.`));
+    
+    deleteBackupContents(backupDir);
+    
+    if (deletedCount > 0) {
+      console.log(chalk.green(`✅ ${deletedCount}개의 백업 파일을 모두 삭제했습니다.`));
+    } else {
+      console.log(chalk.green('백업 폴더가 비어있습니다.'));
+    }
+  } catch (error) {
+    console.error(chalk.red(`백업 정리 실패: ${error.message}`));
   }
 
   return deletedCount;
@@ -136,7 +171,7 @@ export async function modifyCode(filePath, request, genAI, prompts, rootDir) {
     
     // 입력 검증 및 보안 처리
     const sanitizedRequest = sanitizeInput(request);
-    const targetPath = validateAndNormalizePath(filePath, rootDir);
+    const targetPath = validateAndNormalizePath(filePath, process.cwd());
     
     // 파일 확장자 검증
     if (!isAllowedFileExtension(targetPath)) {
@@ -148,7 +183,7 @@ export async function modifyCode(filePath, request, genAI, prompts, rootDir) {
     // 파일 존재 여부 및 크기 확인
     if (!fs.existsSync(targetPath)) {
       console.log(chalk.yellow(`\n⚠️  파일을 찾을 수 없습니다: ${filePath}`));
-      console.log(chalk.gray(`현재 디렉토리: ${currentDir}`));
+      console.log(chalk.gray(`현재 디렉토리: ${process.cwd()}`));
       
       // 유사한 파일명 제안
       try {
@@ -191,9 +226,23 @@ export async function modifyCode(filePath, request, genAI, prompts, rootDir) {
     try {
       const backupDir = ensureBackupDirectory(rootDir);
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      backupPath = path.join(backupDir, `${path.basename(filePath)}.${timestamp}.backup`);
+      
+      // 원본 파일의 상대 경로 구조를 백업 디렉토리에 유지
+      const relativePath = path.relative(rootDir, targetPath);
+      const backupFilePath = path.join(backupDir, relativePath);
+      const backupFileDir = path.dirname(backupFilePath);
+      
+      // 백업 파일의 디렉토리 구조 생성
+      if (!fs.existsSync(backupFileDir)) {
+        fs.mkdirSync(backupFileDir, { recursive: true });
+      }
+      
+      backupPath = `${backupFilePath}.${timestamp}.backup`;
       fs.writeFileSync(backupPath, originalContent);
-      console.log(chalk.green(`✅ 백업 완료: ${backupPath}`));
+      
+      // 백업 경로를 더 명확하게 표시
+      const relativeBackupPath = path.relative(rootDir, backupPath);
+      console.log(chalk.green(`✅ 백업 완료: backup/${relativeBackupPath.replace(/^backup\//, '')}`));
     } catch (backupError) {
       console.log(chalk.yellow(`⚠️  백업 실패: ${backupError.message}`));
     }
