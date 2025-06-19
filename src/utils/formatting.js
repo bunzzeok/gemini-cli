@@ -1,21 +1,48 @@
 import chalk from 'chalk';
 
+// JSON 문자열에서 제어 문자 제거 함수
+function sanitizeJsonString(str) {
+  // 제어 문자 제거 (탭, 줄바꿈 제외)
+  return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+}
+
 export function formatAnalysisResult(analysis) {
   try {
     // JSON 형식이 아닌 경우 직접 텍스트 처리
     let text = analysis;
+    
+    // JSON 블록 검색 및 파싱
     if (analysis.includes('```json')) {
       const jsonMatch = analysis.match(/```json\n([\s\S]*?)\n```/);
       if (jsonMatch) {
-        const jsonStr = jsonMatch[1];
+        let jsonStr = jsonMatch[1];
+        
         try {
+          // 제어 문자 정리
+          jsonStr = sanitizeJsonString(jsonStr);
           const result = JSON.parse(jsonStr);
-          if (result.text) {
+          
+          if (result && result.text) {
             text = result.text;
           }
         } catch (e) {
-          console.error('JSON 파싱 오류:', e);
+          console.error('JSON 파싱 오류:', e.message);
+          // JSON 파싱 실패 시 원본 분석 결과 사용
+          console.log('원본 분석 결과를 사용합니다.');
         }
+      }
+    }
+    
+    // 만약 여전히 JSON 형태라면 직접 파싱 시도
+    if (typeof text === 'string' && text.trim().startsWith('{')) {
+      try {
+        const sanitized = sanitizeJsonString(text.trim());
+        const parsed = JSON.parse(sanitized);
+        if (parsed && parsed.text) {
+          text = parsed.text;
+        }
+      } catch (e) {
+        // 실패해도 계속 진행
       }
     }
 

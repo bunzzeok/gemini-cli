@@ -236,8 +236,9 @@ async function analyzeProject() {
 
 // 백업 디렉토리 생성 함수
 function ensureBackupDirectory(filePath) {
-  const backupDir = path.join(rootDir, 'backup');
-  const relativePath = path.relative(rootDir, filePath);
+  const currentDir = process.cwd();
+  const backupDir = path.join(currentDir, 'backup');
+  const relativePath = path.relative(currentDir, filePath);
   const backupPath = path.join(backupDir, relativePath);
   const backupDirPath = path.dirname(backupPath);
 

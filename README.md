@@ -60,6 +60,22 @@ gemini "What is the capital of France?"
 
 ## Changelog
 
+### v1.1.7 (2025-06-19)
+
+- Code Quality and Structure Improvements
+  - Refactored core modules for better maintainability
+  - Enhanced error handling across all service layers
+  - Updated file processing logic and path resolution
+  - Improved code organization and modularity
+- Configuration Updates
+  - Updated package.json dependencies and metadata
+  - Enhanced build scripts and setup procedures
+  - Improved .gitignore configuration
+- Bug Fixes and Optimizations
+  - Fixed various edge cases in file operations
+  - Enhanced backup system reliability
+  - Improved CLI command handling and response formatting
+
 ### v1.1.6 (2025-06-18)
 
 - Backup Path Storage Enhancement
