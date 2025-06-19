@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import chalk from 'chalk';
 import { formatAnalysisResult } from '../utils/formatting.js';
+import { validateAndNormalizePath, isAllowedFileExtension, isFileSizeAllowed } from '../utils/security.js';
 
 export function analyzeProjectStructure() {
   const files = [];
@@ -141,17 +142,25 @@ export async function analyzeProject(genAI, prompts) {
 
 export async function analyzeCode(filePath, genAI, prompts) {
   try {
-    // 파일 경로 해석 및 검증
-    const currentDir = process.cwd();
-    const targetPath = path.isAbsolute(filePath) ? filePath : path.resolve(currentDir, filePath);
+    // 보안 검증된 파일 경로 처리
+    const targetPath = validateAndNormalizePath(filePath);
     
     console.log(chalk.blue(`\n파일 분석 시작: ${targetPath}`));
+    
+    // 파일 확장자 검증
+    if (!isAllowedFileExtension(targetPath)) {
+      throw new Error(`허용되지 않은 파일 형식입니다: ${path.extname(filePath)}`);
+    }
     
     // 파일 존재 여부 확인
     if (!fs.existsSync(targetPath)) {
       console.log(chalk.yellow(`\n⚠️  파일을 찾을 수 없습니다: ${filePath}`));
-      console.log(chalk.gray(`현재 디렉토리: ${currentDir}`));
       return null;
+    }
+    
+    // 파일 크기 확인
+    if (!isFileSizeAllowed(targetPath)) {
+      throw new Error('파일 크기가 너무 큽니다 (10MB 제한)');
     }
 
     // 파일 읽기
