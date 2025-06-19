@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import chalk from 'chalk';
+import { validateAndNormalizePath, isAllowedFileExtension, isFileSizeAllowed, sanitizeInput } from '../utils/security.js';
 
 export function ensureBackupDirectory(rootDir) {
   const backupDir = path.join(rootDir, 'backup');
@@ -10,19 +11,141 @@ export function ensureBackupDirectory(rootDir) {
   return backupDir;
 }
 
+/**
+ * 백업 파일 목록 조회
+ * @param {string} rootDir - 루트 디렉토리
+ * @returns {Array} 백업 파일 목록
+ */
+export function listBackups(rootDir) {
+  const backupDir = path.join(rootDir, 'backup');
+  if (!fs.existsSync(backupDir)) {
+    return [];
+  }
+
+  try {
+    const files = fs.readdirSync(backupDir);
+    return files
+      .filter(file => file.endsWith('.backup'))
+      .map(file => {
+        const filePath = path.join(backupDir, file);
+        const stats = fs.statSync(filePath);
+        return {
+          name: file,
+          path: filePath,
+          size: stats.size,
+          created: stats.mtime,
+          originalFile: file.replace(/\.[^.]+\.backup$/, '')
+        };
+      })
+      .sort((a, b) => b.created - a.created);
+  } catch (error) {
+    console.error(chalk.red(`백업 목록 조회 실패: ${error.message}`));
+    return [];
+  }
+}
+
+/**
+ * 백업 파일 복원
+ * @param {string} backupPath - 백업 파일 경로
+ * @param {string} targetPath - 복원할 대상 파일 경로 (선택사항)
+ * @returns {boolean} 복원 성공 여부
+ */
+export function restoreFromBackup(backupPath, targetPath = null) {
+  try {
+    if (!fs.existsSync(backupPath)) {
+      throw new Error(`백업 파일을 찾을 수 없습니다: ${backupPath}`);
+    }
+
+    const backupContent = fs.readFileSync(backupPath, 'utf-8');
+    
+    // 대상 파일 경로가 지정되지 않은 경우 원본 파일명 추출
+    if (!targetPath) {
+      const backupFileName = path.basename(backupPath);
+      const originalFileName = backupFileName.replace(/\.[^.]+\.backup$/, '');
+      targetPath = path.join(process.cwd(), originalFileName);
+    }
+
+    // 현재 파일이 존재하면 추가 백업 생성
+    if (fs.existsSync(targetPath)) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const preRestoreBackup = path.join(path.dirname(backupPath), `${path.basename(targetPath)}.pre-restore-${timestamp}.backup`);
+      fs.copyFileSync(targetPath, preRestoreBackup);
+      console.log(chalk.yellow(`복원 전 현재 파일 백업: ${preRestoreBackup}`));
+    }
+
+    fs.writeFileSync(targetPath, backupContent);
+    console.log(chalk.green(`✅ 백업 복원 완료: ${targetPath}`));
+    return true;
+  } catch (error) {
+    console.error(chalk.red(`❌ 백업 복원 실패: ${error.message}`));
+    return false;
+  }
+}
+
+/**
+ * 오래된 백업 파일 정리
+ * @param {string} rootDir - 루트 디렉토리
+ * @param {number} maxAge - 최대 보관 기간 (일)
+ * @param {number} maxCount - 최대 백업 파일 수
+ * @returns {number} 삭제된 파일 수
+ */
+export function cleanupBackups(rootDir, maxAge = 30, maxCount = 50) {
+  const backups = listBackups(rootDir);
+  if (backups.length === 0) {
+    return 0;
+  }
+
+  let deletedCount = 0;
+  const now = new Date();
+  const maxAgeMs = maxAge * 24 * 60 * 60 * 1000;
+
+  // 나이별 정리
+  const oldBackups = backups.filter(backup => {
+    const age = now - backup.created;
+    return age > maxAgeMs;
+  });
+
+  // 개수별 정리
+  const excessBackups = backups.slice(maxCount);
+
+  // 중복 제거
+  const toDelete = [...new Set([...oldBackups, ...excessBackups])];
+
+  toDelete.forEach(backup => {
+    try {
+      fs.unlinkSync(backup.path);
+      deletedCount++;
+      console.log(chalk.gray(`🗑️  오래된 백업 삭제: ${backup.name}`));
+    } catch (error) {
+      console.error(chalk.red(`백업 삭제 실패: ${backup.name} - ${error.message}`));
+    }
+  });
+
+  if (deletedCount > 0) {
+    console.log(chalk.green(`✅ ${deletedCount}개의 오래된 백업 파일을 정리했습니다.`));
+  }
+
+  return deletedCount;
+}
+
 export async function modifyCode(filePath, request, genAI, prompts, rootDir) {
   let backupPath = null; // 백업 경로를 저장할 변수 선언
   
   try {
     console.log(chalk.blue(`\n코드 수정 시작: ${filePath}`));
     
-    // 현재 작업 디렉토리 기준으로 파일 경로 해석
-    const currentDir = process.cwd();
-    const targetPath = path.isAbsolute(filePath) ? filePath : path.resolve(currentDir, filePath);
+    // 입력 검증 및 보안 처리
+    const sanitizedRequest = sanitizeInput(request);
+    const targetPath = validateAndNormalizePath(filePath, rootDir);
+    
+    // 파일 확장자 검증
+    if (!isAllowedFileExtension(targetPath)) {
+      throw new Error(`허용되지 않은 파일 형식입니다: ${path.extname(filePath)}`);
+    }
     
     console.log(chalk.gray(`대상 파일: ${targetPath}`));
     
-    // 파일 존재 여부 확인
+    // 파일 존재 여부 및 크기 확인
     if (!fs.existsSync(targetPath)) {
       console.log(chalk.yellow(`\n⚠️  파일을 찾을 수 없습니다: ${filePath}`));
       console.log(chalk.gray(`현재 디렉토리: ${currentDir}`));
@@ -44,6 +167,11 @@ export async function modifyCode(filePath, request, genAI, prompts, rootDir) {
       }
       
       throw new Error(`파일을 찾을 수 없습니다: ${filePath}`);
+    }
+
+    // 파일 크기 확인
+    if (!isFileSizeAllowed(targetPath)) {
+      throw new Error('파일 크기가 너무 큽니다 (10MB 제한)');
     }
 
     // 원본 파일 읽기
@@ -94,7 +222,7 @@ export async function modifyCode(filePath, request, genAI, prompts, rootDir) {
     });
 
     const result = await modificationChat.sendMessage({
-      message: `다음 코드를 수정해주세요:\n\n${originalContent}\n\n수정 요청: ${request}`,
+      message: `다음 코드를 수정해주세요:\n\n${originalContent}\n\n수정 요청: ${sanitizedRequest}`,
     });
 
     // API 응답 검증
