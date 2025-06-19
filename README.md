@@ -158,6 +158,72 @@ gemini
 
 ## Changelog
 
+### v1.2.1 (2025-06-19)
+
+#### 🐛 **Bug Fixes**
+- **Fixed backup file path structure issue**
+  - **Problem**: Backup files were ignoring the original file's path structure and being stored in the root backup folder
+  - **Solution**: Modified backup creation to maintain the original file's directory structure within the backup folder
+  - **Example**: 
+    - Before: `src/app.js` → `backup/app.js.timestamp.backup`
+    - After: `src/app.js` → `backup/src/app.js.timestamp.backup`
+- **Fixed root directory configuration issue**
+  - **Problem**: Backup files were being created in the Gemini CLI project root instead of the execution location
+  - **Solution**: Changed `rootDir` to current working directory (`process.cwd()`) to create backups in the execution location
+  - **Example**: 
+    - Before: `vocatrain-v2-FE/src/app.js` → `gemini-cli/backup/...`
+    - After: `vocatrain-v2-FE/src/app.js` → `vocatrain-v2-FE/backup/...`
+
+#### 🚀 **New Features**
+- **Added `tree` command for project structure visualization**
+  - **Feature**: Visualize project directory structure in tree format
+  - **Usage**: Use `tree` command to view current project's file/folder structure
+  - **Benefits**: Easy identification of exact file paths for modifications
+  - **Features**:
+    - Color-coded directories and files
+    - File extension-based color coding (JS/TS: yellow, JSON/MD: green, CSS: magenta, etc.)
+    - Smart filtering (excludes `node_modules`, `.git`, `backup`, etc.)
+    - Alphabetical sorting (directories first)
+
+- **Enhanced README generation with project analysis**
+  - **Feature**: Automatically generate customized README based on project structure analysis
+  - **Improvement**: Creates new files with date stamps instead of overwriting existing README
+  - **Analysis**: Provides project structure and package.json information to AI for accurate README generation
+  - **Output**: Generates files in `README-2024-01-15.md` format
+
+#### 🔧 **Backup System Improvements**
+- **Enhanced backup list display**
+  - Backup file listing now searches only within backup folder (removed full project search)
+  - Added original file path location information for backup files
+  - Clearer backup path display (`backup/src/app.js.timestamp.backup`)
+
+- **Improved backup cleanup functionality**
+  - **Change**: `backup cleanup` command now deletes all files within backup folder
+  - **Before**: Deleted only backups older than 30 days (selective deletion)
+  - **After**: Complete deletion of all files within backup folder
+  - **Safety**: Recursive deletion ensures all subdirectories are cleaned
+
+- **Improved backup management**
+  - `listBackups()` function now properly handles nested backup directory structures
+  - Enhanced path matching for backup restoration
+  - Improved backup completion messages (relative path display)
+
+#### 📚 **Documentation Updates**
+- **Updated help command**
+  - Added `tree` command
+  - Improved command categorization (Analysis, Modification, Documentation, Backup Management, Other)
+  - Clearer command descriptions
+
+#### 🎯 **User Experience Improvements**
+- **Better file path handling**
+  - Backup creation based on execution directory
+  - Independent backup management per project
+  - Intuitive file path display
+
+- **Enhanced project analysis**
+  - README generation based on actual project structure analysis
+  - Accurate technology stack information using package.json data
+
 ### v1.1.8 (2025-06-19)
 
 #### 🚀 **Major Architecture Improvements**

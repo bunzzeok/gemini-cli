@@ -7,11 +7,12 @@ import { handleCommand } from "./commands/handler.js";
 import { ChatService } from "./services/chat.js";
 import { startLoading, stopLoading, showWelcomeMessage, showError } from "./utils/ui.js";
 import { GoogleGenAI } from "@google/genai";
+import chalk from 'chalk';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const rootDir = path.resolve(__dirname, "..");
-const envPath = path.join(rootDir, ".env");
+const rootDir = process.cwd(); // 현재 작업 디렉토리를 루트로 사용
+const envPath = path.join(path.resolve(__dirname, ".."), ".env");
 
 // .env 파일 로드
 dotenv.config({ path: envPath });
@@ -92,9 +93,23 @@ function startApp() {
 async function handleSingleCommand(message) {
   try {
     startLoading();
-    const response = await chatService.sendSingleMessage(message);
-    stopLoading();
-    console.log(response);
+    
+    // 명령어 처리 먼저 시도
+    let isCommand = false;
+    try {
+      isCommand = await handleCommand(message, genAI, prompts, rootDir);
+    } catch (commandError) {
+      console.error(chalk.red(`명령어 처리 중 오류: ${commandError.message}`));
+    }
+    
+    if (!isCommand) {
+      // 명령어가 아니면 채팅 서비스로 처리
+      const response = await chatService.sendSingleMessage(message);
+      stopLoading();
+      console.log(response);
+    } else {
+      stopLoading();
+    }
   } catch (error) {
     stopLoading();
     showError("오류가 발생했습니다", error);
