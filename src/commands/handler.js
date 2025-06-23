@@ -17,13 +17,13 @@ function showHelp() {
   
   console.log(chalk.blue(`\n${t('help.title', lang)}\n`));
   console.log(chalk.yellow(`${t('help.basic', lang)}`));
-  console.log(chalk.green('  gemini') + chalk.gray('                    - ' + (lang === 'ko' ? '대화형 모드 시작' : 'Start interactive mode')));
-  console.log(chalk.green('  gemini "' + (lang === 'ko' ? '질문' : 'question') + '"') + chalk.gray('             - ' + (lang === 'ko' ? '단일 질문 모드' : 'Single question mode')));
+  console.log(chalk.green('  gemini') + chalk.gray('                    - ' + t('commands.startInteractive', lang)));
+  console.log(chalk.green('  gemini "' + (lang === 'ko' ? '질문' : 'question') + '"') + chalk.gray('             - ' + t('commands.singleQuestion', lang)));
   console.log('');
   console.log(chalk.yellow(`${t('help.analysis', lang)}`));
-  console.log(chalk.green('  ' + (lang === 'ko' ? '프로젝트 분석해줘' : 'analyze project')) + chalk.gray('           - ' + (lang === 'ko' ? '전체 프로젝트 분석' : 'Analyze entire project')));
-  console.log(chalk.green('  [' + (lang === 'ko' ? '파일명' : 'filename') + '] ' + (lang === 'ko' ? '분석해줘' : 'analyze')) + chalk.gray('          - ' + (lang === 'ko' ? '특정 파일 분석' : 'Analyze specific file')));
-  console.log(chalk.green('  tree') + chalk.gray('                      - ' + (lang === 'ko' ? '프로젝트 디렉토리 구조 보기' : 'Show project directory structure')));
+  console.log(chalk.green('  ' + (lang === 'ko' ? '프로젝트 분석해줘' : 'analyze project')) + chalk.gray('           - ' + t('commands.analyzeProject', lang)));
+  console.log(chalk.green('  [' + (lang === 'ko' ? '파일명' : 'filename') + '] ' + (lang === 'ko' ? '분석해줘' : 'analyze')) + chalk.gray('          - ' + t('commands.analyzeFile', lang)));
+  console.log(chalk.green('  tree') + chalk.gray('                      - ' + t('commands.showTree', lang)));
   console.log('');
   console.log(chalk.yellow(`${t('help.modification', lang)}`));
   console.log(chalk.green('  [' + (lang === 'ko' ? '파일명' : 'filename') + '] ' + (lang === 'ko' ? '수정해줘' : 'modify')) + chalk.gray('          - ' + (lang === 'ko' ? '파일 수정' : 'Modify file')));
@@ -33,7 +33,7 @@ function showHelp() {
   console.log(chalk.green('  "' + (lang === 'ko' ? 'React 19 새 기능은?' : 'What are React 19 new features?') + '"') + chalk.gray('       - ' + (lang === 'ko' ? '실시간 정보 검색' : 'Real-time info search')));
   console.log(chalk.green('  "' + (lang === 'ko' ? 'Python vs JavaScript 비교해줘' : 'Compare Python vs JavaScript') + '"') + chalk.gray(' - ' + (lang === 'ko' ? '전문 정보 수집' : 'Expert info collection')));
   console.log('');
-  console.log(chalk.cyan('  ' + (lang === 'ko' ? '자동 웹 검색 동작 조건:' : 'Auto web search conditions:')));
+  console.log(chalk.cyan('  ' + t('commands.webSearchConditions', lang)));
   console.log(chalk.gray('    • ' + (lang === 'ko' ? '최신 정보나 뉴스가 필요한 질문' : 'Questions requiring latest news/info')));
   console.log(chalk.gray('    • ' + (lang === 'ko' ? '실시간 데이터나 현재 상황 문의' : 'Real-time data or current situation queries')));
   console.log(chalk.gray('    • ' + (lang === 'ko' ? '구체적인 제품/서비스 정보 요청' : 'Specific product/service info requests')));
@@ -577,7 +577,7 @@ async function handleWebSearchCommand(input) {
       return true;
     }
 
-    console.log(chalk.blue(`\n🌐 웹 검색을 시작합니다: "${query}"\n`));
+    console.log(chalk.blue(`\n${t('searchStarted')}: "${query}"\n`));
 
     const webSearchService = new WebSearchService(process.env.GEMINI_API_KEY);
     const result = await webSearchService.search(query);

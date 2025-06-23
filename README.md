@@ -215,6 +215,56 @@ gemini
 
 ## Changelog
 
+### v1.4.0 (2025-06-23)
+
+#### 🎯 **Major Bug Fixes & Language Improvements**
+- **Fixed Language Switching Issues**
+  - **Issue**: English language setting wasn't working properly - AI responses and UI messages were still in Korean
+  - **Solution**: Complete overhaul of language detection system
+  - **Impact**: Now when you set `set language en`, everything responds in English including:
+    - AI chat responses
+    - Web search results and status messages
+    - All UI text and system messages
+
+- **Improved Multiline Input System**
+  - **Issue**: Character duplication and display problems after first input
+  - **Solution**: Rewrote multiline input handler to fix terminal state conflicts
+  - **Features**: 
+    - Stable backslash (`\`) continuation method
+    - Clean terminal display with proper cleanup
+    - No more duplicate characters or overlapping text
+
+- **Streamlined Text Formatting**
+  - **Change**: Removed complex markdown libraries that were causing rendering issues
+  - **Implementation**: Simple text formatter with chalk styling
+  - **Benefits**:
+    - Faster loading and better compatibility
+    - Clean text output with proper alignment
+    - Basic styling (bold, italic, headers) without markup artifacts
+    - Consistent formatting across all responses
+
+#### 🔧 **Technical Improvements**
+- **Language System Overhaul**: Dynamic prompt generation based on current language setting
+- **Internationalization**: All hardcoded text now uses i18n system
+- **Dependency Optimization**: Removed `marked` and `marked-terminal` for lighter package
+- **Input Stability**: Fixed readline interface conflicts and terminal state management
+
+#### 💡 **Usage Changes**
+```bash
+# Language switching now works properly
+> set language en
+Language changed to: English
+> hello
+Response: Hi there! How can I help you today?
+
+# Multiline input with backslash
+> This is a long question \
+... that continues on the next line \
+... and finishes here
+
+# Clean text formatting without markdown artifacts
+```
+
 ### v1.3.0 (2025-06-23)
 
 #### 🚀 **Major New Features**

@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { t } from './i18n.js';
 
 /**
  * UI 유틸리티 함수들
@@ -12,7 +13,10 @@ let loadingInterval;
  * 로딩 애니메이션 시작
  * @param {string} message - 로딩 메시지
  */
-export function startLoading(message = 'Gemini가 생각중입니다...') {
+export function startLoading(message = null) {
+  if (!message) {
+    message = t('ui.thinking');
+  }
   let i = 0;
   loadingInterval = setInterval(() => {
     process.stdout.write(`\r${loadingChars[i]} ${message}`);
@@ -47,12 +51,12 @@ export function formatAnalysisResult(analysis) {
             text = result.text;
           }
         } catch (e) {
-          console.error('JSON 파싱 오류:', e);
+          console.error(t('errors.jsonParseError'), e);
         }
       }
     }
 
-    let formattedOutput = chalk.green('\n✨ 분석 결과: ✨\n\n');
+    let formattedOutput = chalk.green(`\n${t('ui.analysisResult')}\n\n`);
     
     // 섹션별로 분리
     const sections = text.split('\n\n');
@@ -92,18 +96,65 @@ export function formatAnalysisResult(analysis) {
 
     return formattedOutput;
   } catch (error) {
-    console.error('포맷팅 중 오류 발생:', error);
+    console.error(t('errors.formatError'), error);
     return analysis;
   }
+}
+
+/**
+ * ASCII 아트 브랜드 로고
+ */
+function showBrandLogo() {
+  const logo = `
+${chalk.cyan('██████╗ ██████╗ ██╗ ██████╗  ██████╗ ███████╗')}
+${chalk.cyan('██╔══██╗██╔══██╗██║██╔════╝ ██╔════╝ ██╔════╝')}
+${chalk.cyan('██████╔╝██████╔╝██║██║  ███╗██║  ███╗███████╗')}
+${chalk.cyan('██╔══██╗██╔══██╗██║██║   ██║██║   ██║╚════██║')}
+${chalk.cyan('██████╔╝██║  ██║██║╚██████╔╝╚██████╔╝███████║')}
+${chalk.cyan('╚═════╝ ╚═╝  ╚═╝╚═╝ ╚═════╝  ╚═════╝ ╚══════╝')}
+
+${chalk.magenta('           ██████╗ ███████╗███╗   ███╗██╗███╗   ██╗██╗')}
+${chalk.magenta('          ██╔════╝ ██╔════╝████╗ ████║██║████╗  ██║██║')}
+${chalk.magenta('          ██║  ███╗█████╗  ██╔████╔██║██║██╔██╗ ██║██║')}
+${chalk.magenta('          ██║   ██║██╔══╝  ██║╚██╔╝██║██║██║╚██╗██║██║')}
+${chalk.magenta('          ╚██████╔╝███████╗██║ ╚═╝ ██║██║██║ ╚████║██║')}
+${chalk.magenta('           ╚═════╝ ╚══════╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝')}
+
+${chalk.yellow('                           ██████╗██╗     ██╗')}
+${chalk.yellow('                          ██╔════╝██║     ██║')}
+${chalk.yellow('                          ██║     ██║     ██║')}
+${chalk.yellow('                          ██║     ██║     ██║')}
+${chalk.yellow('                          ╚██████╗███████╗██║')}
+${chalk.yellow('                           ╚═════╝╚══════╝╚═╝')}
+`;
+  return logo;
 }
 
 /**
  * 환영 메시지 출력
  */
 export function showWelcomeMessage() {
-  console.log(
-    'Gemini CLI에 오신 것을 환영합니다! (종료하려면 "exit" 또는 "quit"를 입력하세요)'
-  );
+  console.clear(); // 화면 클리어
+  
+  // ASCII 아트 로고 출력
+  console.log(showBrandLogo());
+  
+  // 버전 정보와 설명
+  console.log(chalk.gray('═'.repeat(60)));
+  console.log(chalk.green.bold('🤖 Google Gemini AI Command Line Interface'));
+  console.log(chalk.blue('📦 Version: 1.3.1'));
+  console.log(chalk.yellow('✨ Enhanced with Terminal Markdown & Multi-line Input'));
+  console.log(chalk.gray('═'.repeat(60)));
+  
+  console.log(chalk.cyan(`\n${t('ui.quickTips')}`));
+  console.log(chalk.white(`  ${t('ui.typeQuestion')}`));
+  console.log(chalk.white(`  ${t('ui.multiline')}`));
+  console.log(chalk.white(`  ${t('ui.helpCommand')}`));
+  console.log(chalk.white(`  ${t('ui.webSearch')}`));
+  
+  console.log(chalk.gray('\n' + '─'.repeat(60)));
+  console.log(chalk.green(t('ui.ready')));
+  console.log(chalk.gray('─'.repeat(60) + '\n'));
 }
 
 /**
@@ -114,7 +165,7 @@ export function showWelcomeMessage() {
 export function showError(message, error = null) {
   console.error(chalk.red(`❌ ${message}`));
   if (error && error.message) {
-    console.error(chalk.gray(`상세 정보: ${error.message}`));
+    console.error(chalk.gray(`${t('ui.detailInfo')}: ${error.message}`));
   }
 }
 

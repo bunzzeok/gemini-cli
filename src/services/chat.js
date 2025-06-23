@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import chalk from 'chalk';
+import { smartFormat } from '../utils/markdown.js';
 
 /**
  * 채팅 서비스
@@ -20,17 +21,7 @@ export class ChatService {
         model: "gemini-2.0-flash",
         config: {
           systemInstruction: this.prompts.chat,
-          temperature: 0.7,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "OBJECT",
-            properties: {
-              action: { type: "STRING" },
-              text: { type: "STRING" },
-            },
-            required: ["action", "text"],
-            propertyOrdering: ["action", "text"],
-          },
+          temperature: 0.7
         },
       });
     }
@@ -48,17 +39,7 @@ export class ChatService {
         model: "gemini-2.0-flash",
         config: {
           systemInstruction: this.prompts.chat,
-          temperature: 0.7,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: "OBJECT",
-            properties: {
-              action: { type: "STRING" },
-              text: { type: "STRING" },
-            },
-            required: ["action", "text"],
-            propertyOrdering: ["action", "text"],
-          },
+          temperature: 0.7
         },
       });
 
@@ -91,12 +72,10 @@ export class ChatService {
    */
   parseResponse(response) {
     try {
-      const parsedResponse = JSON.parse(response);
-      if (parsedResponse && parsedResponse.text) {
-        return parsedResponse.text;
-      }
-      return response;
-    } catch (parseError) {
+      // 마크다운을 터미널 친화적으로 렌더링
+      return smartFormat(response);
+    } catch (formatError) {
+      // 포맷팅 실패 시 원본 텍스트 반환
       return response;
     }
   }

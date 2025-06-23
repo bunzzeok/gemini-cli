@@ -1,5 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import chalk from 'chalk';
+import { smartFormat } from '../utils/markdown.js';
+import { t } from '../utils/i18n.js';
 
 export class WebSearchService {
   constructor(apiKey) {
@@ -10,7 +12,7 @@ export class WebSearchService {
   async search(query, options = {}) {
     const { maxSearchLoops = 1, initialQueryCount = 2 } = options;
 
-    console.log(chalk.blue(`🔍 검색 중...`));
+    console.log(chalk.blue(t('searching')));
 
     try {
       // Step 1: Generate initial search queries (reduced count)
@@ -34,11 +36,11 @@ export class WebSearchService {
         const reflection = await this.reflectOnResults(query, allResults);
 
         if (reflection.isSufficient || !reflection.followUpQueries.length) {
-          console.log(chalk.green('✅ 충분한 정보가 수집되었습니다.'));
+          console.log(chalk.green(t('sufficientInfo')));
           break;
         }
 
-        console.log(chalk.yellow(`🔄 보완 검색 중...`));
+        console.log(chalk.yellow(t('additionalSearch')));
 
         for (const followUpQuery of reflection.followUpQueries) {
           const result = await this.performWebSearch(followUpQuery);
@@ -55,12 +57,12 @@ export class WebSearchService {
       const finalAnswer = await this.generateFinalAnswer(query, allResults);
 
       return {
-        answer: finalAnswer,
+        answer: smartFormat(finalAnswer),
         sources: this.deduplicateSources(sources),
         searchQueries: searchQueries,
       };
     } catch (error) {
-      console.error(chalk.red(`웹 검색 중 오류 발생: ${error.message}`));
+      console.error(chalk.red(`${t('errors.searchFailed')}: ${error.message}`));
       throw error;
     }
   }
@@ -98,7 +100,7 @@ Requirements:
       const response = JSON.parse(result.candidates[0].content.parts[0].text);
       return response.queries || [query];
     } catch (error) {
-      console.warn(chalk.yellow('검색 쿼리 생성 실패, 기본 쿼리 사용'));
+      console.warn(chalk.yellow(t('commands.searchStarted')));
       return [query];
     }
   }
@@ -130,7 +132,7 @@ Focus on: reliable sources, facts, data, clear attribution.`;
         query: searchQuery,
       };
     } catch (error) {
-      console.warn(chalk.yellow(`검색 실패: ${searchQuery} - ${error.message}`));
+      console.warn(chalk.yellow(`${t('errors.searchFailed')}: ${searchQuery} - ${error.message}`));
       return null;
     }
   }
@@ -154,12 +156,16 @@ Focus on: reliable sources, facts, data, clear attribution.`;
   }
 
   async generateFinalAnswer(originalQuery, results) {
+    const settings = await import('../config/settings.js');
+    const currentLang = settings.loadSettings().language || 'ko';
+    const responseLanguage = currentLang === 'en' ? 'English' : 'Korean';
+    
     const prompt = `Answer: ${originalQuery}
 
 Info collected:
 ${results.join('\n---\n')}
 
-Format: Clear, structured Korean response with key info bolded.`;
+Format: Clear, structured ${responseLanguage} response. Use simple text formatting without markdown.`;
 
     try {
       const chat = this.genAI.chats.create({
@@ -172,7 +178,7 @@ Format: Clear, structured Korean response with key info bolded.`;
       const result = await chat.sendMessage({ message: prompt });
       return result.candidates[0].content.parts[0].text;
     } catch (error) {
-      console.error(chalk.red(`최종 답변 생성 실패: ${error.message}`));
+      console.error(chalk.red(`${t('errors.generalError')}: ${error.message}`));
       return results.join('\n\n---\n\n');
     }
   }
