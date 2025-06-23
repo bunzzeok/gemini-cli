@@ -4,35 +4,58 @@ import chalk from 'chalk';
 import { analyzeProject, analyzeCode, analyzeProjectStructure } from '../services/analyzer.js';
 import { modifyCode, listBackups, restoreFromBackup, cleanupBackups } from '../services/modifier.js';
 import { sanitizeInput } from '../utils/security.js';
+import { WebSearchService } from '../services/websearch.js';
+import { loadSettings, saveSettings, getAvailableModels, getAvailableModelNames, getAvailableLanguages } from '../config/settings.js';
+import { t } from '../utils/i18n.js';
 
 /**
  * 도움말 표시 함수
  */
 function showHelp() {
-  console.log(chalk.blue('\n🤖 Gemini CLI 도움말\n'));
-  console.log(chalk.yellow('기본 명령어:'));
-  console.log(chalk.green('  gemini') + chalk.gray('                    - 대화형 모드 시작'));
-  console.log(chalk.green('  gemini "질문"') + chalk.gray('             - 단일 질문 모드'));
+  const settings = loadSettings();
+  const lang = settings.language;
+  
+  console.log(chalk.blue(`\n${t('help.title', lang)}\n`));
+  console.log(chalk.yellow(`${t('help.basic', lang)}`));
+  console.log(chalk.green('  gemini') + chalk.gray('                    - ' + (lang === 'ko' ? '대화형 모드 시작' : 'Start interactive mode')));
+  console.log(chalk.green('  gemini "' + (lang === 'ko' ? '질문' : 'question') + '"') + chalk.gray('             - ' + (lang === 'ko' ? '단일 질문 모드' : 'Single question mode')));
   console.log('');
-  console.log(chalk.yellow('분석 명령어:'));
-  console.log(chalk.green('  프로젝트 분석해줘') + chalk.gray('           - 전체 프로젝트 분석'));
-  console.log(chalk.green('  [파일명] 분석해줘') + chalk.gray('          - 특정 파일 분석'));
-  console.log(chalk.green('  tree') + chalk.gray('                      - 프로젝트 디렉토리 구조 보기'));
+  console.log(chalk.yellow(`${t('help.analysis', lang)}`));
+  console.log(chalk.green('  ' + (lang === 'ko' ? '프로젝트 분석해줘' : 'analyze project')) + chalk.gray('           - ' + (lang === 'ko' ? '전체 프로젝트 분석' : 'Analyze entire project')));
+  console.log(chalk.green('  [' + (lang === 'ko' ? '파일명' : 'filename') + '] ' + (lang === 'ko' ? '분석해줘' : 'analyze')) + chalk.gray('          - ' + (lang === 'ko' ? '특정 파일 분석' : 'Analyze specific file')));
+  console.log(chalk.green('  tree') + chalk.gray('                      - ' + (lang === 'ko' ? '프로젝트 디렉토리 구조 보기' : 'Show project directory structure')));
   console.log('');
-  console.log(chalk.yellow('수정 명령어:'));
-  console.log(chalk.green('  [파일명] 수정해줘') + chalk.gray('          - 파일 수정'));
+  console.log(chalk.yellow(`${t('help.modification', lang)}`));
+  console.log(chalk.green('  [' + (lang === 'ko' ? '파일명' : 'filename') + '] ' + (lang === 'ko' ? '수정해줘' : 'modify')) + chalk.gray('          - ' + (lang === 'ko' ? '파일 수정' : 'Modify file')));
   console.log('');
-  console.log(chalk.yellow('문서 명령어:'));
-  console.log(chalk.green('  README 작성해줘') + chalk.gray('           - README.md 생성'));
+  console.log(chalk.yellow(`${t('help.smart', lang)}`));
+  console.log(chalk.green('  "' + (lang === 'ko' ? '2024년 AI 동향 알려줘' : 'Tell me about AI trends 2024') + '"') + chalk.gray('      - ' + (lang === 'ko' ? '최신 정보 자동 웹 검색' : 'Auto web search for latest info')));
+  console.log(chalk.green('  "' + (lang === 'ko' ? 'React 19 새 기능은?' : 'What are React 19 new features?') + '"') + chalk.gray('       - ' + (lang === 'ko' ? '실시간 정보 검색' : 'Real-time info search')));
+  console.log(chalk.green('  "' + (lang === 'ko' ? 'Python vs JavaScript 비교해줘' : 'Compare Python vs JavaScript') + '"') + chalk.gray(' - ' + (lang === 'ko' ? '전문 정보 수집' : 'Expert info collection')));
   console.log('');
-  console.log(chalk.yellow('백업 관리:'));
-  console.log(chalk.green('  backup list') + chalk.gray('               - 백업 파일 목록 보기'));
-  console.log(chalk.green('  backup restore [파일명]') + chalk.gray('    - 백업에서 복원'));
-  console.log(chalk.green('  backup cleanup') + chalk.gray('            - 오래된 백업 정리'));
+  console.log(chalk.cyan('  ' + (lang === 'ko' ? '자동 웹 검색 동작 조건:' : 'Auto web search conditions:')));
+  console.log(chalk.gray('    • ' + (lang === 'ko' ? '최신 정보나 뉴스가 필요한 질문' : 'Questions requiring latest news/info')));
+  console.log(chalk.gray('    • ' + (lang === 'ko' ? '실시간 데이터나 현재 상황 문의' : 'Real-time data or current situation queries')));
+  console.log(chalk.gray('    • ' + (lang === 'ko' ? '구체적인 제품/서비스 정보 요청' : 'Specific product/service info requests')));
+  console.log(chalk.gray('    • ' + (lang === 'ko' ? '기술 비교나 튜토리얼 요청' : 'Tech comparisons or tutorial requests')));
   console.log('');
-  console.log(chalk.yellow('기타:'));
-  console.log(chalk.green('  help') + chalk.gray('                      - 이 도움말 표시'));
-  console.log(chalk.green('  exit, quit') + chalk.gray('               - 프로그램 종료'));
+  console.log(chalk.yellow(`${t('help.settings', lang)}`));
+  console.log(chalk.green('  set model [model]') + chalk.gray('            - ' + (lang === 'ko' ? 'Gemini 모델 변경' : 'Change Gemini model')));
+  console.log(chalk.green('  set language [ko|en]') + chalk.gray('         - ' + (lang === 'ko' ? '언어 변경' : 'Change language')));
+  console.log(chalk.green('  settings') + chalk.gray('                   - ' + (lang === 'ko' ? '현재 설정 보기' : 'Show current settings')));
+  console.log(chalk.green('  models') + chalk.gray('                    - ' + (lang === 'ko' ? '사용 가능한 모델 목록' : 'List available models')));
+  console.log('');
+  console.log(chalk.yellow(`${t('help.document', lang)}`));
+  console.log(chalk.green('  README ' + (lang === 'ko' ? '작성해줘' : 'generate')) + chalk.gray('           - README.md ' + (lang === 'ko' ? '생성' : 'generation')));
+  console.log('');
+  console.log(chalk.yellow(`${t('help.backup', lang)}`));
+  console.log(chalk.green('  backup list') + chalk.gray('               - ' + (lang === 'ko' ? '백업 파일 목록 보기' : 'List backup files')));
+  console.log(chalk.green('  backup restore [' + (lang === 'ko' ? '파일명' : 'filename') + ']') + chalk.gray('    - ' + (lang === 'ko' ? '백업에서 복원' : 'Restore from backup')));
+  console.log(chalk.green('  backup cleanup') + chalk.gray('            - ' + (lang === 'ko' ? '오래된 백업 정리' : 'Clean old backups')));
+  console.log('');
+  console.log(chalk.yellow(`${t('help.other', lang)}`));
+  console.log(chalk.green('  help') + chalk.gray('                      - ' + (lang === 'ko' ? '이 도움말 표시' : 'Show this help')));
+  console.log(chalk.green('  exit, quit') + chalk.gray('               - ' + (lang === 'ko' ? '프로그램 종료' : 'Exit program')));
   console.log('');
 }
 
@@ -46,6 +69,20 @@ export async function handleCommand(input, genAI, prompts, rootDir) {
     return true;
   }
   
+  if (sanitizedInput.toLowerCase() === 'settings') {
+    showSettings();
+    return true;
+  }
+  
+  if (sanitizedInput.toLowerCase() === 'models') {
+    showAvailableModels();
+    return true;
+  }
+  
+  if (sanitizedInput.toLowerCase().startsWith('set ')) {
+    return handleSettingsCommand(sanitizedInput);
+  }
+  
   if (sanitizedInput.toLowerCase() === 'tree') {
     showProjectTree(rootDir);
     return true;
@@ -55,20 +92,38 @@ export async function handleCommand(input, genAI, prompts, rootDir) {
     return handleBackupCommand(sanitizedInput, rootDir);
   }
   
+  
   try {
     const commandChat = genAI.chats.create({
       model: "gemini-2.0-flash",
       config: {
-        systemInstruction: prompts.codeAnalysis,
-        temperature: 0.7,
+        systemInstruction: `${prompts.codeAnalysis}
+
+웹 검색 의도 판단:
+사용자의 질문이 다음 중 하나에 해당하면 "websearch" 액션을 선택하세요:
+- 최신 정보나 뉴스를 요청하는 경우 (예: "2024년 AI 동향", "최근 React 업데이트")
+- 실시간 데이터나 현재 상황을 묻는 경우 (예: "현재 주가", "오늘 날씨")
+- 구체적인 제품/서비스 정보를 요청하는 경우 (예: "iPhone 15 스펙", "ChatGPT 가격")
+- 비교 정보를 요청하는 경우 (예: "Python vs JavaScript", "AWS vs Azure")
+- 튜토리얼이나 가이드를 요청하는 경우 (예: "React 설치 방법", "Docker 사용법")
+- "검색해줘", "찾아줘", "알아봐줘" 등의 표현이 포함된 경우
+- 일반적인 지식을 넘어서는 전문적이거나 세부적인 정보를 요청하는 경우
+
+웹 검색이 필요하지 않은 경우:
+- 일반적인 대화나 질문
+- 프로젝트 분석 요청
+- 코드 수정 요청  
+- 도움말 요청`,
+        temperature: 0.3,
         responseMimeType: "application/json",
         responseSchema: {
           type: "OBJECT",
           properties: {
-            action: { type: "STRING", enum: ["analyze", "modify", "chat", "readme", "help", "backup", "restore", "cleanup"] },
+            action: { type: "STRING", enum: ["analyze", "modify", "chat", "readme", "help", "backup", "restore", "cleanup", "websearch", "settings"] },
             filePath: { type: "STRING" },
             request: { type: "STRING" },
-            text: { type: "STRING" }
+            text: { type: "STRING" },
+            searchQuery: { type: "STRING" }
           },
           required: ["action", "text"]
         }
@@ -252,6 +307,9 @@ ${projectInfo.packageJson ? `package.json 정보: ${JSON.stringify(projectInfo.p
       case "backup":
         return handleBackupCommand(response.request || 'list', rootDir);
         
+      case "websearch":
+        return handleWebSearchCommand(response.searchQuery || response.text || sanitizedInput);
+        
       case "chat":
         return false;
     }
@@ -415,4 +473,144 @@ function showProjectTree(rootDir) {
   
   buildTree(rootDir);
   console.log('');
+}
+
+/**
+ * 현재 설정 표시
+ */
+function showSettings() {
+  const settings = loadSettings();
+  const lang = settings.language;
+  
+  console.log(chalk.blue('\n⚙️ Current Settings\n'));
+  console.log(chalk.yellow(`${t('settings.currentModel', lang)}: `) + chalk.green(settings.model));
+  console.log(chalk.yellow(`${t('settings.currentLanguage', lang)}: `) + chalk.green(settings.language === 'ko' ? '한국어' : 'English'));
+  console.log(chalk.yellow('Temperature: ') + chalk.green(settings.temperature));
+  console.log(chalk.yellow('Web Search Model: ') + chalk.green(settings.webSearchModel));
+  console.log('');
+}
+
+/**
+ * 설정 명령어 처리
+ */
+function handleSettingsCommand(input) {
+  const settings = loadSettings();
+  const lang = settings.language;
+  const parts = input.split(' ');
+  
+  if (parts.length < 3) {
+    console.log(chalk.yellow(lang === 'ko' ? '사용법: set model [모델명] 또는 set language [ko|en]' : 'Usage: set model [model] or set language [ko|en]'));
+    return true;
+  }
+  
+  const setting = parts[1].toLowerCase();
+  const value = parts[2].toLowerCase();
+  
+  if (setting === 'model') {
+    const availableModelNames = getAvailableModelNames();
+    if (!availableModelNames.includes(value)) {
+      console.log(chalk.red(`${t('settings.invalidModel', lang)}: ${value}`));
+      console.log(chalk.yellow(`${t('settings.availableModels', lang)}: ${availableModelNames.join(', ')}`));
+      return true;
+    }
+    
+    saveSettings({ model: value, webSearchModel: value });
+    console.log(chalk.green(`${t('settings.modelChanged', lang)}: ${value}`));
+  } else if (setting === 'language') {
+    const availableLanguages = Object.keys(getAvailableLanguages());
+    if (!availableLanguages.includes(value)) {
+      console.log(chalk.red(`${t('settings.invalidLanguage', lang)}: ${value}`));
+      console.log(chalk.yellow(`${t('settings.availableLanguages', lang)}: ${availableLanguages.join(', ')}`));
+      return true;
+    }
+    
+    saveSettings({ language: value });
+    console.log(chalk.green(`${t('settings.languageChanged', value)}: ${getAvailableLanguages()[value]}`));
+  } else {
+    console.log(chalk.yellow(lang === 'ko' ? '알 수 없는 설정입니다.' : 'Unknown setting.'));
+  }
+  
+  return true;
+}
+
+/**
+ * 사용 가능한 모델 목록 표시
+ */
+function showAvailableModels() {
+  const settings = loadSettings();
+  const lang = settings.language;
+  const models = getAvailableModels();
+  
+  console.log(chalk.blue('\n🤖 Available Gemini Models\n'));
+  
+  Object.entries(models).forEach(([modelName, modelInfo]) => {
+    const isCurrentModel = settings.model === modelName;
+    const marker = isCurrentModel ? chalk.green(' ← Current') : '';
+    
+    console.log(chalk.cyan(`📍 ${modelName}${marker}`));
+    console.log(chalk.gray(`   ${modelInfo.description}`));
+    console.log(chalk.yellow(`   Capabilities: ${modelInfo.capabilities.join(', ')}`));
+    console.log('');
+  });
+  
+  console.log(chalk.gray(`💡 ${lang === 'ko' ? '모델 변경: set model [모델명]' : 'Change model: set model [model-name]'}`));
+  console.log('');
+}
+
+/**
+ * 웹 검색 명령어 처리
+ * @param {string} input - 웹 검색 명령어
+ * @returns {boolean} - 명령어 처리 성공 여부
+ */
+async function handleWebSearchCommand(input) {
+  try {
+    const query = input.trim();
+    
+    if (!query) {
+      console.log(chalk.yellow('검색할 내용을 입력해주세요.'));
+      return true;
+    }
+
+    // API 키 확인
+    if (!process.env.GEMINI_API_KEY) {
+      console.error(chalk.red('Gemini API 키가 설정되지 않았습니다.'));
+      return true;
+    }
+
+    console.log(chalk.blue(`\n🌐 웹 검색을 시작합니다: "${query}"\n`));
+
+    const webSearchService = new WebSearchService(process.env.GEMINI_API_KEY);
+    const result = await webSearchService.search(query);
+
+    if (result) {
+      // 헤더
+      console.log(chalk.blue('\n╔═══════════════════════════════════════╗'));
+      console.log(chalk.blue('║              🔍 검색 결과              ║'));
+      console.log(chalk.blue('╚═══════════════════════════════════════╝\n'));
+      
+      // 답변 내용
+      console.log(chalk.white(result.answer));
+      
+      // 출처 정보 (간결하게)
+      if (result.sources && result.sources.length > 0) {
+        console.log(chalk.blue('\n┌─ 📚 참고 자료 ─────────────────────┐'));
+        result.sources.slice(0, 3).forEach((source, index) => {
+          const title = source.title.length > 50 ? source.title.substring(0, 47) + '...' : source.title;
+          console.log(chalk.cyan(`│ ${index + 1}. ${title}`));
+          console.log(chalk.gray(`│    ${source.url}`));
+        });
+        if (result.sources.length > 3) {
+          console.log(chalk.gray(`│    ... 외 ${result.sources.length - 3}개 추가`));
+        }
+        console.log(chalk.blue('└────────────────────────────────────┘'));
+      }
+      
+      console.log('');
+    }
+
+    return true;
+  } catch (error) {
+    console.error(chalk.red(`웹 검색 실행 중 오류 발생: ${error.message}`));
+    return true;
+  }
 } 
