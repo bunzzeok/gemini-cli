@@ -24,7 +24,7 @@ gemini
 
 This will start an interactive chat session with Gemini AI. You can:
 
-- Type your questions or prompts
+- Type your questions or prompts in **Korean or English**
 - Press Enter to send
 - Type 'exit' or 'quit' to end the session
 
@@ -34,17 +34,61 @@ You can also ask a single question:
 
 ```bash
 gemini "What is the capital of France?"
+gemini "2024년 AI 동향 알려줘"  # Auto web search for latest info
 ```
+
+### Configuration
+
+Set your preferred language and Gemini model:
+
+```bash
+# Change language
+gemini
+> set language en    # English
+> set language ko    # Korean
+
+# Change Gemini model
+> set model gemini-2.0-flash
+> set model gemini-2.5-pro
+> set model gemini-2.0-flash-lite
+
+# View available models
+> models
+
+# View current settings
+> settings
+```
+
+### Smart Web Search
+
+The CLI automatically detects when you need web search and performs intelligent research:
+
+```bash
+gemini "Latest React 19 features"        # Auto web search
+gemini "Compare Python vs JavaScript"    # Technical comparison
+gemini "Current AI trends 2024"          # Latest information
+```
+
+**Auto web search triggers on:**
+- Latest news/information requests
+- Real-time data queries
+- Product/service information
+- Technical comparisons and tutorials
+- Keywords like "latest", "current", "compare", etc.
 
 ### Command Reference
 
 #### Analysis Commands
 ```bash
-# Analyze entire project
+# Analyze entire project (Korean)
 프로젝트 분석해줘
+
+# Analyze entire project (English)
+analyze project
 
 # Analyze specific file
 [filename] 분석해줘
+[filename] analyze
 ```
 
 #### Code Modification
@@ -100,7 +144,8 @@ gemini
 ### 🤖 **AI Chat Interface**
 - Interactive chat session with Gemini AI
 - Single query mode for one-off questions
-- Korean language support with friendly interface
+- **Bilingual support (Korean/English)** with automatic language detection
+- **Multiple Gemini models** (2.0-flash, 2.5-pro, 2.0-flash-lite, 2.5-flash)
 - Real-time AI responses with loading animations
 
 ### 📊 **Project Analysis**
@@ -138,6 +183,18 @@ gemini
 - **Analysis commands**: Project and file analysis
 - **Modification commands**: Natural language code editing
 
+### 🌐 **Intelligent Web Search**
+- **Automatic web search detection** based on query intent
+- Multi-step research with reflection and follow-up queries
+- **Source attribution** with reliable reference links
+- Optimized for both real-time information and technical queries
+
+### ⚙️ **Customizable Settings**
+- **Model selection**: Choose from multiple Gemini models
+- **Language preference**: Switch between Korean and English
+- **Persistent configuration** stored locally
+- Easy settings management via CLI commands
+
 ### 🔧 **Developer Experience**
 - Support for both Windows and macOS
 - Smart error handling with helpful suggestions
@@ -157,6 +214,47 @@ gemini
 - The tool works offline once the API key is configured
 
 ## Changelog
+
+### v1.3.0 (2025-06-23)
+
+#### 🚀 **Major New Features**
+- **Intelligent Web Search Integration**
+  - **Automatic intent detection**: AI automatically determines when web search is needed
+  - **Multi-step research**: Generates multiple search queries and performs follow-up searches
+  - **Source attribution**: Provides reliable references with clean formatting
+  - **Optimized performance**: Reduced token costs with efficient English prompts
+
+- **Bilingual Support System**
+  - **Language switching**: `set language ko|en` to switch between Korean and English
+  - **Localized help**: Dynamic help text based on selected language
+  - **Persistent settings**: Language preference saved across sessions
+
+- **Multiple Gemini Model Support**
+  - **Model selection**: Choose from gemini-2.0-flash, gemini-2.5-pro, gemini-2.0-flash-lite, gemini-2.5-flash
+  - **Easy switching**: `set model [model-name]` command
+  - **Model information**: `models` command to view all available models with descriptions
+  - **Unified configuration**: Model settings apply to both chat and web search
+
+#### ⚙️ **Settings Management**
+- **New commands**:
+  - `settings` - View current configuration
+  - `models` - List all available Gemini models with descriptions
+  - `set model [model]` - Change Gemini model
+  - `set language [ko|en]` - Change interface language
+- **Persistent storage**: Settings saved in `config.json`
+- **Smart defaults**: Fallback to sensible defaults if config missing
+
+#### 🎨 **Improved User Experience**
+- **Enhanced search results**: Beautiful formatted output with bordered sections
+- **Reduced verbosity**: Cleaner progress indicators and status messages
+- **Better error handling**: More informative error messages in user's preferred language
+- **Optimized performance**: 50% reduction in API calls through simplified reflection logic
+
+#### 🔧 **Technical Improvements**
+- **Token optimization**: English prompts reduce costs by 80%
+- **Modular architecture**: Separated settings, i18n, and configuration management
+- **Type safety**: Better error handling and validation
+- **Future-ready**: Extensible framework for additional languages and models
 
 ### v1.2.1 (2025-06-19)
 
